@@ -27,8 +27,7 @@ module CloudstackRubyClient
     module Registration
       cmd_processor :register_template,
                     :register_iso,
-                    :register_user_keys,
-                    :register_ssh_key_pair
+                    :register_user_keys
     end
   end
 end
