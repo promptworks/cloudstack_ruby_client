@@ -4,7 +4,7 @@ class Module
     /getvmpassword/i            => 'getVMPassword'
   }
 
-  # 
+  #
   # The following is malformed response title in ACS, should be fixed
   #
   MALFORMED_RESPONSES = {
@@ -26,6 +26,10 @@ class Module
     /copyiso/i                      => 'copytemplateresponse',
     /deleteiso/i                    => 'deleteisosresponse',
     /listisopermissions/i           => 'listtemplatepermissionsresponse'
+  }
+
+  MALFORMED_NAMESPACES = {
+    'keypair' => 'sshkeypair'
   }
 
   def cmd_processor(*args)
@@ -75,14 +79,14 @@ class Module
           if /.*vpc.*/i =~ command
             command.gsub!(/vpc/i, 'VPC')
           end
-      } + 
+      } +
       %Q{
           params = {'command' => command}
           params.merge!(args) unless args.empty?
 
           response = request(params)
           json = JSON.parse(response.body)
-          
+
           if !response.is_a?(Net::HTTPOK)
             if ["431","530"].include?(response.code) and ["9999","4350"].include?(json[resp_title]['cserrorcode'])
                raise ArgumentError, json[resp_title]['errortext']
@@ -93,10 +97,16 @@ class Module
             raise CloudstackRubyClient::RequestError.new(response, json)
           end
 
-          json[resp_title]
+          json = json[resp_title]
+
+          MALFORMED_NAMESPACES.each do |k, v|
+            json[v] = json.delete(k) if json.has_key?(k)
+          end
+
+          json
         end
       }
-      
+
       self.class_eval(meta_method)
     end
   end
